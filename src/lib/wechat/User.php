@@ -15,7 +15,6 @@ class User
 {
     private $requestUrl = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token=%s&openid=%s&lang=zh_CN';
 
-
     public function __construct($token , $openId)  {
         $this -> requestUrl = sprintf($this -> requestUrl , $token , $openId);
     }
@@ -25,7 +24,9 @@ class User
         $requeset = new Common();
         $apiResults = $requeset -> httpRequest($this ->requestUrl);
         $apiResults = json_decode($apiResults , true);
-        var_dump($apiResults);
-        exit;
+        if( !empty($apiResults['errcode']) ) {
+            throw new \Exception($apiResults['errmsg'] , $apiResults['errcode']);
+        } 
+        return $apiResults;
     }
 }

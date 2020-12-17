@@ -26,6 +26,14 @@ class AccessToken
             WeChatServiceConfig::APP_ID , WeChatServiceConfig::APP_SECRET , $code);
     }
 
+    /**
+        $code = input('get.code');
+        $accessToken = new AccessToken($code);
+        $token = $accessToken -> getAccessTokenByCode();
+     * @desc 授权登陆获取openID + access_token
+     * @return mixed
+     * @throws \Exception
+     */
     public function getAccessTokenByCode()
     {
         $handle = new Common();
