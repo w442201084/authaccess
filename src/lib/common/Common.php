@@ -10,63 +10,73 @@ namespace access\lib\common;
 
 class Common
 {
-    public
-        /**
-         * CURL请求
-         * @param $url 请求url地址
-         * @param $method 请求方法 get post
-         * @param null $postfields post数据数组
-         * @param array $headers 请求header信息
-         * @param bool|false $debug  调试开启 默认false
-         * @return mixed
-         */
-    function httpRequest($url, $method = 'get', $postfields = null, $headers = array(), $debug = false) {
-        $method = strtoupper($method);
-        $ci = curl_init();
-        /* Curl settings */
-        curl_setopt($ci, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-        curl_setopt($ci, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0");
-        curl_setopt($ci, CURLOPT_CONNECTTIMEOUT, 60); /* 在发起连接前等待的时间，如果设置为0，则无限等待 */
-        curl_setopt($ci, CURLOPT_TIMEOUT, 7); /* 设置cURL允许执行的最长秒数 */
-        curl_setopt($ci, CURLOPT_RETURNTRANSFER, true);
-        switch ($method) {
-            case "POST":
-                curl_setopt($ci, CURLOPT_POST, true);
-                if (!empty($postfields)) {
-                    $tmpdatastr = is_array($postfields) ? http_build_query($postfields) : $postfields;
-                    curl_setopt($ci, CURLOPT_POSTFIELDS, $tmpdatastr);
-                }
-                break;
-            default:
-                curl_setopt($ci, CURLOPT_CUSTOMREQUEST, $method); /* //设置请求方式 */
-                break;
+ 
+    /**
+     * curl 函数
+     * @param string $url 请求的地址
+     * @param string $type POST/GET/post/get
+     * @param array $data 要传输的数据
+     * @param string $err_msg 可选的错误信息（引用传递）
+     * @param int $timeout 超时时间
+     * @param array 证书信息
+     * @author 勾国印
+     */
+    public function httpRequest($url, $type = 'GET', $data = false, &$err_msg = null, $timeout = 20, $cert_info = array())
+    {
+        $type = strtoupper($type);
+        if ($type == 'GET' && is_array($data)) {
+            $data = http_build_query($data);
         }
-        $ssl = preg_match('/^https:\/\//i',$url) ? TRUE : FALSE;
-        curl_setopt($ci, CURLOPT_URL, $url);
-        if($ssl){
-            curl_setopt($ci, CURLOPT_SSL_VERIFYPEER, FALSE); // https请求 不验证证书和hosts
-            curl_setopt($ci, CURLOPT_SSL_VERIFYHOST, FALSE); // 不从证书中检查SSL加密算法是否存在
+
+        $option = array();
+
+        if ( $type == 'POST' ) {
+            $option[CURLOPT_POST] = 1;
         }
-        //curl_setopt($ci, CURLOPT_HEADER, true); /*启用时会将头文件的信息作为数据流输出*/
-        curl_setopt($ci, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ci, CURLOPT_MAXREDIRS, 2);/*指定最多的HTTP重定向的数量，这个选项是和CURLOPT_FOLLOWLOCATION一起使用的*/
-        curl_setopt($ci, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ci, CURLINFO_HEADER_OUT, true);
-        /*curl_setopt($ci, CURLOPT_COOKIE, $Cookiestr); * *COOKIE带过去** */
-        $response = curl_exec($ci);
-        $requestinfo = curl_getinfo($ci);
-        $http_code = curl_getinfo($ci, CURLINFO_HTTP_CODE);
-        if ($debug) {
-            echo "=====post data======\r\n";
-            var_dump($postfields);
-            echo "=====info===== \r\n";
-            print_r($requestinfo);
-            echo "=====response=====\r\n";
-            print_r($response);
+        if ($data) {
+            if ($type == 'POST') {
+                $option[CURLOPT_POSTFIELDS] = $data;
+            } elseif ($type == 'GET') {
+                $url = strpos($url, '?') !== false ? $url.'&'.$data :  $url.'?'.$data;
+            }
         }
-        curl_close($ci);
-        return $response; 
+
+        $option[CURLOPT_URL]            = $url;
+        $option[CURLOPT_FOLLOWLOCATION] = TRUE;
+        $option[CURLOPT_MAXREDIRS]      = 4;
+        $option[CURLOPT_RETURNTRANSFER] = TRUE;
+        $option[CURLOPT_TIMEOUT]        = $timeout;
+
+        //设置证书信息
+        if(!empty($cert_info) && !empty($cert_info['cert_file'])) {
+            $option[CURLOPT_SSLCERT]       = $cert_info['cert_file'];
+            $option[CURLOPT_SSLCERTPASSWD] = $cert_info['cert_pass'];
+            $option[CURLOPT_SSLCERTTYPE]   = $cert_info['cert_type'];
+        }
+
+        //设置CA
+        if(!empty($cert_info['ca_file'])) {
+            // 对认证证书来源的检查，0表示阻止对证书的合法性的检查。1需要设置CURLOPT_CAINFO
+            $option[CURLOPT_SSL_VERIFYPEER] = 1;
+            $option[CURLOPT_CAINFO] = $cert_info['ca_file'];
+        } else {
+            // 对认证证书来源的检查，0表示阻止对证书的合法性的检查。1需要设置CURLOPT_CAINFO
+            $option[CURLOPT_SSL_VERIFYPEER] = 0;
+        }
+
+        $ch = curl_init();
+        curl_setopt_array($ch, $option);
+        $response = curl_exec($ch);
+        $curl_no  = curl_errno($ch);
+        $curl_err = curl_error($ch);
+        curl_close($ch);
+
+        // error_log
+        if($curl_no > 0) {
+            if($err_msg !== null) {
+                $err_msg = '('.$curl_no.')'.$curl_err;
+            }
+        }
+        return $response;
     }
-
-
 }

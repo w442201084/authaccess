@@ -13,15 +13,14 @@ use access\lib\common\Common;
 
 class AccessToken
 {
-    private $requestUrl = 'https://api.weixin.qq.com/sns/oauth2/access_token?
-            appid=%s&secret=%s&code=%s&grant_type=authorization_code';
+    private $requestUrl = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code';
 
     public function __construct($code)
     {
         $this -> requestUrl = sprintf($this -> requestUrl ,
             WeChatServiceConfig::APP_ID , WeChatServiceConfig::APP_SECRET , $code);
     }
-    
+
     public function getAccessToken()
     {
         $handle = new Common();
