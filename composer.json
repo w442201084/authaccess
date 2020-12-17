@@ -1,0 +1,16 @@
+{
+    "name": "auth/access",
+    "type": "library",
+    "authors": [
+        {
+            "name": "wushuang",
+            "email": "287387387@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "access\\": "src/"
+        }
+    },
+    "require": {}
+}
