@@ -21,17 +21,12 @@ class Common
      * @param array 证书信息
      * @author 勾国印
      */
-    public function httpRequest($url, $type = 'GET', $data = false, $header = null, &$err_msg = null, $timeout = 20, $cert_info = array())
+    public function httpRequest($url, $type = 'GET', $data = false, $header = null , &$err_msg = null, $timeout = 20, $cert_info = array())
     {
         $type = strtoupper($type);
         if ($type == 'GET' && is_array($data)) {
             $data = http_build_query($data);
         }
-		if(!empty($header)){
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
-            curl_setopt($curl, CURLOPT_HEADER, 0);//返回response头部信息
-        }
-
         $option = array();
 
         if ( $type == 'POST' ) {
@@ -67,8 +62,11 @@ class Common
             // 对认证证书来源的检查，0表示阻止对证书的合法性的检查。1需要设置CURLOPT_CAINFO
             $option[CURLOPT_SSL_VERIFYPEER] = 0;
         }
-
         $ch = curl_init();
+        if(!empty($header)){
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($ch, CURLOPT_HEADER, 0);//返回response头部信息
+        }
         curl_setopt_array($ch, $option);
         $response = curl_exec($ch);
         $curl_no  = curl_errno($ch);
