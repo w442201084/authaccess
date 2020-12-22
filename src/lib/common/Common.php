@@ -21,11 +21,15 @@ class Common
      * @param array 证书信息
      * @author 勾国印
      */
-    public function httpRequest($url, $type = 'GET', $data = false, &$err_msg = null, $timeout = 20, $cert_info = array())
+    public function httpRequest($url, $type = 'GET', $data = false, $header = null, &$err_msg = null, $timeout = 20, $cert_info = array())
     {
         $type = strtoupper($type);
         if ($type == 'GET' && is_array($data)) {
             $data = http_build_query($data);
+        }
+		if(!empty($header)){
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_HEADER, 0);//返回response头部信息
         }
 
         $option = array();
